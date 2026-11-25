@@ -27,6 +27,7 @@ export const ConflictGraph: React.FC<ConflictGraphProps> = ({
   highlightedNodeId = null,
   onNodeClick,
   onNodePositionChange,
+  onEdgeClick,
   interactive = true,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -64,6 +65,14 @@ export const ConflictGraph: React.FC<ConflictGraphProps> = ({
     if (onNodeClick) onNodeClick(nodeId);
   };
 
+  const handleTouchStartNode = (e: React.TouchEvent, nodeId: string) => {
+    e.stopPropagation();
+    if (!interactive) return;
+    setDraggingNodeId(nodeId);
+    setSelectedNodeId(nodeId);
+    if (onNodeClick) onNodeClick(nodeId);
+  };
+
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
       if (draggingNodeId && containerRef.current) {
@@ -84,6 +93,24 @@ export const ConflictGraph: React.FC<ConflictGraphProps> = ({
       }
     },
     [draggingNodeId, isPanning, pan.x, pan.y, panStart.x, panStart.y, zoom, onNodePositionChange]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (draggingNodeId && containerRef.current && e.touches.length === 1) {
+        const touch = e.touches[0];
+        const rect = containerRef.current.getBoundingClientRect();
+        const clientX = touch.clientX - rect.left - pan.x;
+        const clientY = touch.clientY - rect.top - pan.y;
+        const newX = Math.round(clientX / zoom);
+        const newY = Math.round(clientY / zoom);
+
+        if (onNodePositionChange) {
+          onNodePositionChange(draggingNodeId, Math.max(40, Math.min(680, newX)), Math.max(40, Math.min(460, newY)));
+        }
+      }
+    },
+    [draggingNodeId, pan.x, pan.y, zoom, onNodePositionChange]
   );
 
   const handleMouseUp = () => {
@@ -120,6 +147,10 @@ export const ConflictGraph: React.FC<ConflictGraphProps> = ({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseDown={handleContainerMouseDown}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleMouseUp}
+      onTouchCancel={handleMouseUp}
+      style={{ touchAction: draggingNodeId ? 'none' : 'auto' }}
       className="relative w-full h-[480px] md:h-[540px] bg-[#0c0d12] rounded-2xl border border-zinc-800/80 overflow-hidden shadow-2xl select-none"
     >
       {/* Background Grid Pattern */}
@@ -323,6 +354,21 @@ export const ConflictGraph: React.FC<ConflictGraphProps> = ({
                   strokeLinecap="round"
                 />
 
+                {/* Transparent hit area for easy touch / click interaction */}
+                <line
+                  x1={source.x}
+                  y1={source.y}
+                  x2={target.x}
+                  y2={target.y}
+                  stroke="transparent"
+                  strokeWidth={16}
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onEdgeClick) onEdgeClick(edge);
+                  }}
+                />
+
                 {/* Conflict Badge on Edge if Highlighted */}
                 {(isHighlightedByEdgeProp || isIncidentToFocus || isConflictPulsing) && edge.students.length > 0 && (
                   <g transform={`translate(${midX}, ${midY})`}>
@@ -398,6 +444,7 @@ export const ConflictGraph: React.FC<ConflictGraphProps> = ({
                 key={node.id}
                 transform={`translate(${node.x}, ${node.y})`}
                 onMouseDown={(e) => handleMouseDownNode(e, node.id)}
+                onTouchStart={(e) => handleTouchStartNode(e, node.id)}
                 onMouseEnter={() => setHoveredNodeId(node.id)}
                 onMouseLeave={() => setHoveredNodeId(null)}
                 className="cursor-pointer transition-opacity duration-200"

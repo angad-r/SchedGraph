@@ -35,7 +35,6 @@ export function App() {
 
   // Algorithm state synced from simulator
   const [currentAlgorithmStep, setCurrentAlgorithmStep] = useState<AlgorithmStep | null>(null);
-  const [activeColoring, setActiveColoring] = useState<Record<string, number>>({});
 
   // Derive initial final coloring for timetable
   const defaultFinalColoring = React.useMemo(() => {
@@ -43,8 +42,8 @@ export function App() {
     return finalColoring;
   }, [nodes, edges]);
 
-  // If simulator hasn't started or reset, timetable displays the optimal final coloring
-  const timetableColoring = Object.keys(activeColoring).length > 0 ? activeColoring : defaultFinalColoring;
+  // The Final Examination Timetable always displays the completed optimal schedule
+  const timetableColoring = defaultFinalColoring;
 
   // Handle student updates (e.g. adding or removing students)
   const handleUpdateStudents = (updatedStudents: Student[]) => {
@@ -59,7 +58,7 @@ export function App() {
     setEdges(DEFAULT_EDGES);
     setSelectedStudentId(null);
     setSelectedNodeId(null);
-    setActiveColoring({});
+    setCurrentAlgorithmStep(null);
   };
 
   const handleNodePositionChange = (nodeId: string, x: number, y: number) => {
@@ -236,7 +235,6 @@ export function App() {
             nodes={nodes}
             edges={edges}
             onStepChange={setCurrentAlgorithmStep}
-            onColoringChange={setActiveColoring}
           />
         </section>
 
