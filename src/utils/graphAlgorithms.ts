@@ -1,7 +1,29 @@
 import type { ExamNode, Edge, Student, AlgorithmStep, ConflictAuditResult } from '../types';
 
 /**
- * Builds an adjacency map from a list of edges
+ * Validates a graph's consistency and detects invalid edges or self-loops
+ */
+export function validateGraph(nodes: ExamNode[], edges: Edge[]): { isValid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  const nodeSet = new Set(nodes.map((n) => n.id));
+
+  for (const edge of edges) {
+    if (edge.source === edge.target) {
+      errors.push(`Self-loop detected on vertex ${edge.source}. Self-loops are not permitted in conflict graphs.`);
+    }
+    if (!nodeSet.has(edge.source)) {
+      errors.push(`Edge ${edge.id} references non-existent source vertex '${edge.source}'.`);
+    }
+    if (!nodeSet.has(edge.target)) {
+      errors.push(`Edge ${edge.id} references non-existent target vertex '${edge.target}'.`);
+    }
+  }
+
+  return { isValid: errors.length === 0, errors };
+}
+
+/**
+ * Builds an adjacency map from a list of edges, ignoring self-loops and dangling edges defensively
  */
 export function buildAdjacencyList(nodes: ExamNode[], edges: Edge[]): Record<string, Set<string>> {
   const adj: Record<string, Set<string>> = {};
@@ -9,6 +31,7 @@ export function buildAdjacencyList(nodes: ExamNode[], edges: Edge[]): Record<str
     adj[node.id] = new Set<string>();
   }
   for (const edge of edges) {
+    if (edge.source === edge.target) continue; // Ignore self-loops
     if (adj[edge.source] && adj[edge.target]) {
       adj[edge.source].add(edge.target);
       adj[edge.target].add(edge.source);
@@ -357,3 +380,56 @@ export function auditTimetable(
     studentSafety,
   };
 }
+
+/**
+ * Calculates the theoretical Welsh-Powell upper bound:
+ * χ(G) ≤ max_{1≤i≤n} min(d_i + 1, i)
+ */
+export function calculateWelshPowellUpperBound(degrees: Record<string, number>): number {
+  const sortedDegs = Object.values(degrees).sort((a, b) => b - a);
+  if (sortedDegs.length === 0) return 0;
+  let maxMin = 0;
+  for (let i = 0; i < sortedDegs.length; i++) {
+    const rank = i + 1;
+    const val = Math.min(sortedDegs[i] + 1, rank);
+    if (val > maxMin) maxMin = val;
+  }
+  return maxMin;
+}
+
+/**
+ * Computes maximum clique size ω(G) to establish the theoretical lower bound:
+ * χ(G) ≥ ω(G)
+ */
+export function findMaximumCliqueSize(nodes: ExamNode[], edges: Edge[]): number {
+  if (nodes.length === 0) return 0;
+  const adj = buildAdjacencyList(nodes, edges);
+  const n = nodes.length;
+  let maxClique = 1;
+
+  // Search for K2, K3, K4 cliques
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const u = nodes[i].id;
+      const v = nodes[j].id;
+      if (adj[u]?.has(v)) {
+        if (maxClique < 2) maxClique = 2;
+        for (let k = j + 1; k < n; k++) {
+          const w = nodes[k].id;
+          if (adj[u]?.has(w) && adj[v]?.has(w)) {
+            if (maxClique < 3) maxClique = 3;
+            for (let l = k + 1; l < n; l++) {
+              const x = nodes[l].id;
+              if (adj[u]?.has(x) && adj[v]?.has(x) && adj[w]?.has(x)) {
+                if (maxClique < 4) maxClique = 4;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return maxClique;
+}
+

@@ -290,9 +290,10 @@ export const MathProofSection: React.FC<MathProofSectionProps> = ({ nodes, edges
               χ(G) ≤ max₁≤i≤n min(dᵢ + 1, i)
             </div>
             <p className="text-zinc-400 leading-relaxed">
-              For our sequence (3, 3, 3, 3, 2, 2):
+              For our degree sequence (3, 3, 3, 3, 2, 2):
               min(3+1, 1)=1, min(3+1, 2)=2, min(3+1, 3)=3, min(3+1, 4)=4, min(2+1, 5)=3, min(2+1, 6)=3.
-              The maximum of these minimums is <span className="text-cyan-400 font-bold font-mono">3</span>, directly confirming the algorithm's guaranteed termination at ≤ 3 colors!
+              The theoretical upper bound from the Welsh–Powell theorem is <span className="text-purple-400 font-bold font-mono">max(1, 2, 3, 4, 3, 3) = 4</span>.
+              However, when the Welsh–Powell algorithm executes on this graph, its greedy assignment achieves an exact <span className="text-cyan-400 font-bold font-mono">3-coloring</span>. Because the triangle clique K₃ requires at least 3 colors, we achieve the absolute minimum: <span className="text-emerald-400 font-bold font-mono">χ(G) = 3</span>!
             </p>
           </div>
         </div>

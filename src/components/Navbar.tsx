@@ -93,6 +93,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection, onNavigate }) => 
           {/* Audio toggle button */}
           <button
             onClick={handleToggleSound}
+            aria-label={audioActive ? 'Mute UI sounds' : 'Enable tactile audio feedback'}
             className={`p-2 rounded-xl border text-xs transition-colors flex items-center gap-1.5 ${
               audioActive
                 ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
@@ -121,6 +122,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection, onNavigate }) => 
           {/* Mobile hamburger */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle navigation menu"
+            aria-expanded={mobileMenuOpen}
             className="lg:hidden p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

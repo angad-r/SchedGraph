@@ -39,7 +39,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onExplore, onRunAlgori
 
         {/* Main Headings */}
         <div className="space-y-4">
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-tight">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-tight">
             Exam Timetable{' '}
             <span className="bg-gradient-to-r from-cyan-400 via-sky-300 to-purple-400 bg-clip-text text-transparent">
               Scheduling

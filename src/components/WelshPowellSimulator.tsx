@@ -36,6 +36,14 @@ export const WelshPowellSimulator: React.FC<WelshPowellSimulatorProps> = ({
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [prevDatasetVersion, setPrevDatasetVersion] = useState({ nodes, edges });
+
+  if (prevDatasetVersion.nodes !== nodes || prevDatasetVersion.edges !== edges) {
+    setPrevDatasetVersion({ nodes, edges });
+    setCurrentStepIndex(0);
+    setIsPlaying(false);
+  }
+
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1200); // ms per step
   const timerRef = useRef<number | null>(null);
 
@@ -117,7 +125,7 @@ export const WelshPowellSimulator: React.FC<WelshPowellSimulatorProps> = ({
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 
   // Progress percentage
-  const progressPercent = Math.round((currentStepIndex / (steps.length - 1)) * 100);
+  const progressPercent = Math.round((currentStepIndex / Math.max(1, steps.length - 1)) * 100);
 
   return (
     <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 p-5 md:p-6 backdrop-blur-sm space-y-6">

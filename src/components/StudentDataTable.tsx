@@ -43,17 +43,44 @@ export const StudentDataTable: React.FC<StudentDataTableProps> = ({
     return conflicts;
   };
 
+  const [errorMessage, setErrorMessage] = useState('');
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showAddModal) {
+        setShowAddModal(false);
+        setErrorMessage('');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showAddModal]);
+
   const handleToggleAddExam = (examId: string) => {
+    setErrorMessage('');
     setNewStudentExams((prev) =>
       prev.includes(examId) ? prev.filter((id) => id !== examId) : [...prev, examId]
     );
   };
 
   const handleAddStudent = () => {
-    if (!newStudentId.trim() || newStudentExams.length < 2) return;
+    const trimmedId = newStudentId.trim().toUpperCase();
+    if (!trimmedId) {
+      setErrorMessage('Student ID is required (e.g., S7).');
+      return;
+    }
+    if (students.some((s) => s.id.toUpperCase() === trimmedId)) {
+      setErrorMessage(`Student ID '${trimmedId}' already exists. Please choose a unique ID.`);
+      return;
+    }
+    if (newStudentExams.length < 2) {
+      setErrorMessage('Please select at least 2 examinations to introduce a conflict.');
+      return;
+    }
+
     const newStudent: Student = {
-      id: newStudentId.trim().toUpperCase(),
-      name: newStudentName.trim() || `Student ${newStudentId.trim()}`,
+      id: trimmedId,
+      name: newStudentName.trim() || `Student ${trimmedId}`,
       rollNo: `ENG21CS${Math.floor(100 + Math.random() * 900)}`,
       department: 'Engineering',
       exams: newStudentExams,
@@ -64,6 +91,7 @@ export const StudentDataTable: React.FC<StudentDataTableProps> = ({
     setNewStudentId('');
     setNewStudentName('');
     setNewStudentExams([]);
+    setErrorMessage('');
     setShowAddModal(false);
   };
 
@@ -292,12 +320,24 @@ export const StudentDataTable: React.FC<StudentDataTableProps> = ({
 
       {/* Add Student Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-student-title"
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+        >
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in zoom-in-95">
-            <h4 className="text-base font-semibold text-white">Add New Student Enrollment</h4>
+            <h4 id="add-student-title" className="text-base font-semibold text-white">Add New Student Enrollment</h4>
             <p className="text-xs text-zinc-400">
               Select at least 2 examinations to see how this student introduces new conflict edges into the graph.
             </p>
+
+            {errorMessage && (
+              <div className="p-2.5 rounded-lg bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
 
             <div className="space-y-3">
               <div>
